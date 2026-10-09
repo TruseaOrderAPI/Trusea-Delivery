@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TruSea Delivery</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{--deep:#06303f;--sea:#0e7c86;--foam:#e9f4f3;--sand:#f7f5ef;--ink:#12252d;--mute:#5d7178;--line:#d5e2e2;--coral:#e8674f;
+--c-pend:#e08a1e;--c-out:#2a6fdb;--c-del:#1f9d55;--c-can:#d13b3b}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS","Segoe UI",sans-serif;background:var(--sand);color:var(--ink);font-size:15px}
+button,input,select,textarea{font:inherit}
+.hide{display:none!important}
+.brand{font-family:Georgia,"Times New Roman",serif;letter-spacing:.14em;font-weight:700}
+header{background:var(--deep);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
+header .brand{font-size:22px}header small{display:block;color:#9fc7c9;font-size:11px;letter-spacing:.04em}
+header .sp{flex:1}
+.wrap{max-width:1000px;margin:0 auto;padding:14px}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer;background:var(--sea);color:#fff;text-decoration:none;display:inline-block;text-align:center}
+.btn.alt{background:var(--foam);color:var(--deep)}.btn.warn{background:var(--coral)}.btn.ok{background:var(--c-del)}.btn.ghost{background:transparent;border:1px solid #ffffff55;color:#fff;padding:7px 10px}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #f2b84b;outline-offset:1px}
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:57px;z-index:19}
+.tabs button{flex:1;padding:12px;border:0;background:none;font-weight:700;color:var(--mute);border-bottom:3px solid transparent;cursor:pointer}
+.tabs button.on{color:var(--sea);border-color:var(--sea)}
+#login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(170deg,var(--deep),#0b5560);padding:16px}
+.lbox{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:360px}
+.lbox h1{margin:0;color:var(--deep);font-size:32px;text-align:center}
+.lbox p.sub{text-align:center;color:var(--mute);margin:2px 0 18px}
+.seg{display:flex;gap:6px;margin-bottom:14px}.seg button{flex:1;padding:10px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:700;cursor:pointer}
+.seg button.on{background:var(--deep);color:#fff;border-color:var(--deep)}
+label{display:block;font-weight:700;font-size:13px;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.err{color:var(--c-can);min-height:20px;font-size:13px}
+.hint{font-size:12px;color:var(--mute);margin-top:10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:24px;color:var(--deep)}.stat span{color:var(--mute);font-size:13px}
+.stat.big{background:var(--deep);border:0}.stat.big b,.stat.big span{color:#fff}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.panel h3,h2{margin:0 0 8px;color:var(--deep)}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;color:#fff}
+.on-b{background:var(--c-del)}.off-b{background:var(--c-can)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.card{background:#fff;border:1px solid var(--line);border-left:6px solid var(--c-pend);border-radius:12px;padding:14px;cursor:pointer}
+.card.s-Out{border-left-color:var(--c-out)}.card.s-Delivered{border-left-color:var(--c-del)}.card.s-Cancelled{border-left-color:var(--c-can)}
+.card .top{display:flex;justify-content:space-between;align-items:center;font-weight:700;color:var(--sea)}
+.card h4{margin:6px 0 2px;font-size:19px;text-transform:uppercase}
+.card .row{color:var(--mute);margin:2px 0}
+.card .amt{font-size:20px;font-weight:700;margin:6px 0}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.acts .btn{flex:1;min-width:110px;padding:10px 8px;font-size:13px}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}.chips button{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 12px;cursor:pointer}
+.chips button.on{background:var(--deep);color:#fff}
+#map{height:calc(100vh - 150px);min-height:360px;border-radius:12px;border:1px solid var(--line)}
+#modal{position:fixed;inset:0;background:#06303fcc;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+#modal .sheet{background:#fff;width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px}
+@media(min-width:600px){#modal{align-items:center}#modal .sheet{border-radius:18px}}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--foam)}.kv span{color:var(--mute)}
+.radio{display:flex;gap:10px}.radio label{flex:1;border:2px solid var(--line);border-radius:10px;padding:12px;text-align:center;cursor:pointer;margin:0}
+.radio input{width:auto;margin-right:6px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--deep);color:#fff;padding:10px 16px;border-radius:10px;z-index:99}
+.empty{text-align:center;color:var(--mute);padding:30px}
+</style>
+</head>
+<body>
+
+<div id="login">
+ <div class="lbox">
+  <h1 class="brand">TRUSEA</h1>
+  <p class="sub">Fresh Fish &amp; Prawns Delivery</p>
+  <div class="seg"><button id="rb" class="on" onclick="setRole('boy')">Delivery</button><button id="ra" onclick="setRole('admin')">Office</button></div>
+  <label for="uid">Mobile number / Employee ID</label><input id="uid" autocomplete="username">
+  <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
+  <div class="err" id="lerr"></div>
+  <button class="btn" style="width:100%" onclick="login()">Log in</button>
+  <div class="hint">Demo logins: delivery <b>ravi / 1234</b>, office <b>admin / admin123</b>. Change these in CFG.USERS.</div>
+ </div>
+</div>
+
+<div id="app" class="hide">
+ <header>
+  <div><div class="brand" id="ttl">TRUSEA</div><small id="sub">Fresh Fish &amp; Prawns Delivery</small></div>
+  <div class="sp"></div>
+  <span class="badge off-b" id="shareB">Location Sharing: OFF</span>
+  <button class="btn ghost" onclick="logout()">Log out</button>
+ </header>
+ <nav class="tabs" id="tabs"></nav>
+ <div class="wrap">
+  <div id="view"></div>
+  <div id="mapv" class="hide"><div id="map"></div></div>
+ </div>
+</div>
+
+<div id="modal" class="hide" onclick="if(event.target===this)closeM()"><div class="sheet" id="sheet"></div></div>
+
+<script>
+/* ============ CONFIG ============ */
+const CFG={
+  API:'', // Paste your Google Apps Script web app URL here (see setup notes at bottom). Empty = demo mode.
+  USERS:{admin:{pw:'admin123',role:'admin',name:'Office'},ravi:{pw:'1234',role:'boy',name:'Ravi'}},
+  POLL:15000, LOC_MS:20000, STALE_MS:90000
+};
+const ST={Pending:'🟠',Out:'🔵',Delivered:'🟢',Cancelled:'🔴'};
+const LBL={Pending:'Pending',Out:'Out for Delivery',Delivered:'Delivered',Cancelled:'Cancelled'};
+const $=id=>document.getElementById(id);
+const inr=n=>'₹'+Number(n||0).toLocaleString('en-IN');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let S={user:null,role:'boy',orders:[],loc:null,tab:'dash',filter:'All',geo:'off',map:null,layer:null,timers:[]};
+
+/* ============ DATA LAYER ============ */
+const today=()=>new Date().toISOString().slice(0,10);
+const DEMO=()=>[
+ {no:'ORDER 1',name:'Antony',mobile:'9876543210',address:'Thoraipakkam, Chennai',lat:12.9416,lng:80.2361,amount:850,status:'Pending',collected:0,method:'',date:today(),time:'',boy:'Ravi',remarks:''},
+ {no:'ORDER 2',name:'Ajith',mobile:'9876543211',address:'Thadiyur, Tamil Nadu',lat:13.2410,lng:80.1010,amount:720,status:'Pending',collected:0,method:'',date:today(),time:'',boy:'Ravi',remarks:''},
+ {no:'ORDER 3',name:'Maciola',mobile:'9876543212',address:'Thoraipakkam, Chennai',lat:12.9350,lng:80.2410,amount:950,status:'Delivered',collected:950,method:'UPI',date:today(),time:'09:40',boy:'Ravi',remarks:''}];
+function normStatus(s){s=String(s||'').toLowerCase();return s.startsWith('out')?'Out':s.startsWith('deliv')?'Delivered':s.startsWith('cancel')?'Cancelled':'Pending'}
+function fromSheet(r){return{no:String(r.ordernumber||r.no||'').toUpperCase(),name:r.customername||r.name||'',mobile:String(r.mobilenumber||r.mobile||''),address:r.address||'',
+ lat:parseFloat(r.latitude??r.lat)||null,lng:parseFloat(r.longitude??r.lng)||null,amount:Number(String(r.orderamount??r.amount??0).replace(/[^\d.]/g,''))||0,
+ status:normStatus(r.deliverystatus||r.status),collected:Number(String(r.amountcollected??r.collected??0).replace(/[^\d.]/g,''))||0,method:r.paymentmethod||r.method||'',
+ date:String(r.deliverydate||r.date||'').slice(0,10),time:r.deliverytime||r.time||'',boy:r.deliveryboy||r.boy||'',remarks:r.remarks||''}}
+async function loadAll(){
+  try{
+    if(CFG.API){
+      const j=await (await fetch(CFG.API+'?action=all')).json();
+      S.orders=(j.orders||[]).map(fromSheet).filter(o=>o.no);S.loc=j.location||null;
+    }else{
+      let d=localStorage.getItem('ts_orders');if(!d){d=JSON.stringify(DEMO());localStorage.setItem('ts_orders',d)}
+      S.orders=JSON.parse(d);S.loc=JSON.parse(localStorage.getItem('ts_loc')||'null');
+    }
+  }catch(e){toast('Could not reach Google Sheet. Check the API link.')}
+  render();
+}
+async function saveOrder(no,patch){
+  Object.assign(S.orders.find(o=>o.no===no),patch);
+  if(CFG.API){
+    try{await fetch(CFG.API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update',no,patch})})}
+    catch(e){toast('Save failed. Check your connection and try again.')}
+  }else localStorage.setItem('ts_orders',JSON.stringify(S.orders));
+  render();
+}
+async function pushLoc(p){
+  const loc={name:S.user.name,lat:p.coords.latitude,lng:p.coords.longitude,ts:Date.now()};S.loc=loc;
+  if(CFG.API){try{await fetch(CFG.API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'loc',loc})})}catch(e){}}
+  else localStorage.setItem('ts_loc',JSON.stringify(loc));
+}
+
+/* ============ LOGIN ============ */
+function setRole(r){S.role=r;$('rb').classList.toggle('on',r==='boy');$('ra').classList.toggle('on',r==='admin')}
+function login(){
+  const u=CFG.USERS[$('uid').value.trim().toLowerCase()];
+  if(!u||u.pw!==$('pw').value||u.role!==S.role){$('lerr').textContent='Wrong ID, password or role. Check and try again.';return}
+  S.user=u;S.tab=u.role==='admin'?'dash':'route';
+  sessionStorage.setItem('ts_user',$('uid').value.trim().toLowerCase());start();
+}
+function start(){
+  $('login').classList.add('hide');$('app').classList.remove('hide');
+  const boy=S.user.role==='boy';
+  $('ttl').textContent=boy?'TRUSEA DELIVERY':'TRUSEA';
+  $('tabs').innerHTML=boy?tab('route',"Today's Delivery")+tab('map','Map'):tab('dash','Dashboard')+tab('orders','Orders')+tab('map','Live Map');
+  $('shareB').classList.toggle('hide',!boy);
+  loadAll();S.timers.push(setInterval(loadAll,CFG.POLL));
+  if(boy)startGeo();
+}
+const tab=(k,l)=>`<button data-t="${k}" onclick="go('${k}')">${l}</button>`;
+function logout(){S.timers.forEach(clearInterval);if(S.watch!=null)navigator.geolocation.clearWatch(S.watch);sessionStorage.removeItem('ts_user');location.reload()}
+function go(t){S.tab=t;render()}
+
+/* ============ LOCATION SHARING (delivery boy) ============ */
+function setShare(on){S.geo=on?'on':'off';const b=$('shareB');b.textContent='Location Sharing: '+(on?'ON':'OFF');b.className='badge '+(on?'on-b':'off-b')}
+function startGeo(){
+  if(!navigator.geolocation){setShare(false);toast('This browser cannot share location.');return}
+  let last=0;
+  S.watch=navigator.geolocation.watchPosition(p=>{setShare(true);if(Date.now()-last>CFG.LOC_MS){last=Date.now();pushLoc(p)}},
+   e=>{setShare(false);toast(e.code===1?'Location blocked. Allow location in browser settings to share it with the office.':'Cannot get GPS position. Move to open sky and retry.')},
+   {enableHighAccuracy:true,maximumAge:10000,timeout:20000});
+}
+$('shareB').onclick=()=>{if(S.geo!=='on')startGeoRetry()};
+function startGeoRetry(){if(S.watch!=null)navigator.geolocation.clearWatch(S.watch);startGeo()}
+
+/* ============ HELPERS ============ */
+const mine=()=>S.user.role==='admin'?S.orders:S.orders.filter(o=>o.boy.toLowerCase()===S.user.name.toLowerCase());
+const navUrl=o=>{const d=o.lat&&o.lng?`${o.lat},${o.lng}`:encodeURIComponent(o.address);return`https://www.google.com/maps/dir/?api=1&destination=${d}&travelmode=driving`+(S.user&&S.user.role==='boy'?'':'')}
+const isLive=()=>S.user.role==='boy'?S.geo==='on':S.loc&&Date.now()-S.loc.ts<CFG.STALE_MS;
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}
+function closeM(){$('modal').classList.add('hide')}
+function openM(h){$('sheet').innerHTML=h;$('modal').classList.remove('hide')}
+const stop=e=>e&&e.stopPropagation();
+
+/* ============ RENDER ============ */
+function render(){
+  if(!S.user)return;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
+  const isMap=S.tab==='map';
+  $('view').classList.toggle('hide',isMap);$('mapv').classList.toggle('hide',!isMap);
+  if(isMap){drawMap();return}
+  const os=mine();
+  $('view').innerHTML=S.tab==='dash'?dash(os):S.tab==='orders'?ordersView(os):routeView(os);
+}
+function dash(os){
+  const t=os.filter(o=>!o.date||o.date===today()),c=s=>t.filter(o=>o.status===s).length;
+  const del=os.filter(o=>o.status==='Delivered'),sum=m=>del.filter(o=>o.method===m).reduce((a,o)=>a+o.collected,0),tot=del.reduce((a,o)=>a+o.collected,0);
+  const live=isLive(),ago=S.loc?Math.round((Date.now()-S.loc.ts)/60000):null;
+  return`<h2 class="brand">TRUSEA DELIVERY DASHBOARD</h2>
+  <div class="stats">
+   <div class="stat"><b>${t.length}</b><span>Today's Orders</span></div>
+   <div class="stat"><b>${c('Pending')}</b><span>Pending</span></div>
+   <div class="stat"><b>${c('Out')}</b><span>Out for Delivery</span></div>
+   <div class="stat"><b>${c('Delivered')}</b><span>Delivered</span></div>
+   <div class="stat"><b>${os.length}</b><span>Total Orders</span></div>
+  </div>
+  <div class="stats">
+   <div class="stat big"><b>${inr(tot)}</b><span>Total Collection</span></div>
+   <div class="stat"><b>${inr(sum('UPI'))}</b><span>UPI</span></div>
+   <div class="stat"><b>${inr(sum('Cash'))}</b><span>Cash</span></div>
+  </div>
+  <div class="panel"><h3>Delivery Boy Location</h3>
+   <div><b>${esc(S.loc?S.loc.name:'TruSea Delivery Boy')}</b> <span class="badge ${live?'on-b':'off-b'}">Location Sharing: ${live?'ON':'OFF'}</span></div>
+   <p style="color:var(--mute);margin:8px 0">${S.loc?`📍 Last update ${ago<1?'just now':ago+' min ago'}`+(live?'':'. Sharing has stopped, so this is the last known position.'):'No location received yet. The delivery boy must log in and allow location.'}</p>
+   <button class="btn alt" onclick="go('map')">See on map</button></div>
+  <h3>Recent orders</h3><div class="grid">${os.slice(0,6).map(card).join('')||'<div class="empty">No orders yet. Add a row in your Google Sheet.</div>'}</div>`;
+}
+function ordersView(os){
+  const f=S.filter,list=f==='All'?os:os.filter(o=>o.status===f);
+  return`<div class="chips">${['All','Pending','Out','Delivered','Cancelled'].map(k=>`<button class="${f===k?'on':''}" onclick="S.filter='${k}';render()">${k==='All'?'All':LBL[k]}</button>`).join('')}</div>
+  <div class="grid">${list.map(card).join('')||'<div class="empty">No orders with this status.</div>'}</div>`;
+}
+function routeView(os){
+  const act=os.filter(o=>o.status==='Pending'||o.status==='Out'),done=os.filter(o=>o.status==='Delivered'||o.status==='Cancelled');
+  return`<h2>TODAY'S DELIVERY</h2>
+  ${S.geo!=='on'?`<div class="panel" style="border-color:var(--coral)">Location sharing is off. Tap the red badge at the top to allow location so the office can see where you are. Sharing only works while this page stays open and GPS is on.</div>`:''}
+  <div class="grid">${act.map((o,i)=>card(o,i+1)).join('')||'<div class="empty">All deliveries are done.</div>'}</div>
+  ${done.length?`<h3 style="margin-top:18px">Completed</h3><div class="grid">${done.map(card).join('')}</div>`:''}`;
+}
+function card(o,n){
+  const k=esc(o.no),boy=S.user.role==='boy';
+  return`<div class="card s-${o.status}" onclick="detail('${k}')">
+   <div class="top"><span>${n?n+'. ':''}${k}</span><span>${ST[o.status]} ${LBL[o.status]}</span></div>
+   <h4><a href="${navUrl(o)}" target="_blank" rel="noopener" onclick="stop(event)" style="color:inherit;text-decoration:underline dotted">${esc(o.name)}</a></h4>
+   <div class="row">${esc(o.address)}</div><div class="row">📱 ${esc(o.mobile)}</div>
+   <div class="amt">${inr(o.amount)}</div>
+   <div class="acts" onclick="stop(event)">
+    <a class="btn alt" href="${navUrl(o)}" target="_blank" rel="noopener">${boy?'OPEN MAP':'VIEW MAP'}</a>
+    <a class="btn alt" href="tel:${esc(o.mobile)}">CALL CUSTOMER</a>
+    ${boy&&o.status==='Pending'?`<button class="btn" onclick="saveOrder('${k}',{status:'Out'})">START DELIVERY</button>`:''}
+    ${boy&&(o.status==='Pending'||o.status==='Out')?`<button class="btn ok" onclick="payForm('${k}','deliver')">✓ DELIVERED</button>`:''}
+    <button class="btn alt" onclick="detail('${k}')">ORDER DETAILS</button>
+   </div></div>`;
+}
+
+/* ============ ORDER DETAIL & PAYMENT ============ */
+function detail(no){
+  const o=S.orders.find(x=>x.no===no),boy=S.user.role==='boy';
+  const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
+  openM(`<h2 class="brand">${esc(o.no)}</h2>
+   ${kv('Customer',esc(o.name))}${kv('Mobile',esc(o.mobile))}${kv('Address',esc(o.address))}
+   ${kv('Order amount',inr(o.amount))}${kv('Status',ST[o.status]+' '+LBL[o.status])}
+   ${kv('Collected',o.collected?inr(o.collected)+' ('+esc(o.method)+')':'Not yet')}
+   ${kv('Delivered on',o.time?esc(o.date)+' '+esc(o.time):'-')}${kv('Delivery boy',esc(o.boy)||'-')}${kv('Remarks',esc(o.remarks)||'-')}
+   <div class="acts"><a class="btn" href="${navUrl(o)}" target="_blank" rel="noopener">📍 NAVIGATE TO CUSTOMER</a><a class="btn alt" href="tel:${esc(o.mobile)}">📞 CALL CUSTOMER</a></div>
+   <div class="acts">
+   ${boy&&(o.status==='Pending'||o.status==='Out')?`<button class="btn ok" onclick="payForm('${o.no}','deliver')">✓ DELIVERED</button>`:''}
+   ${boy&&o.status==='Delivered'&&!o.collected?`<button class="btn warn" onclick="payForm('${o.no}','pay')">MARK PAYMENT COLLECTED</button>`:''}
+   ${boy&&o.status!=='Delivered'&&o.status!=='Cancelled'?`<button class="btn alt" onclick="if(confirm('Cancel this order?')){saveOrder('${o.no}',{status:'Cancelled'});closeM()}">CANCEL ORDER</button>`:''}
+   <button class="btn alt" onclick="closeM()">CLOSE</button></div>`);
+}
+function payForm(no,mode){
+  const o=S.orders.find(x=>x.no===no),d=mode==='deliver';
+  openM(`<h2>${d?'✓ DELIVERED':'PAYMENT COLLECTION'}</h2>
+   <div class="kv"><span>${esc(o.no)} · ${esc(o.name)}</span><b>Order Amount: ${inr(o.amount)}</b></div>
+   <label>Payment</label>
+   <div class="radio"><label><input type="radio" name="pm" value="Cash">Cash</label><label><input type="radio" name="pm" value="UPI">UPI</label></div>
+   <label for="pa">Amount Collected (₹)</label><input id="pa" type="number" inputmode="numeric" value="${o.amount}">
+   <label for="pr">Remarks (optional)</label><textarea id="pr" rows="2">${esc(o.remarks)}</textarea>
+   <div class="err" id="perr"></div>
+   <div class="acts"><button class="btn ok" onclick="confirmPay('${no}',${d})">${d?'CONFIRM DELIVERY':'MARK PAYMENT COLLECTED'}</button><button class="btn alt" onclick="closeM()">BACK</button></div>`);
+}
+function confirmPay(no,d){
+  const m=document.querySelector('input[name=pm]:checked'),a=Number($('pa').value);
+  if(!m){$('perr').textContent='Select Cash or UPI.';return}
+  if(!(a>=0)){$('perr').textContent='Enter the amount collected.';return}
+  const n=new Date(),patch={collected:a,method:m.value,remarks:$('pr').value.trim()};
+  if(d)Object.assign(patch,{status:'Delivered',date:n.toISOString().slice(0,10),time:n.toTimeString().slice(0,5)});
+  saveOrder(no,patch);closeM();toast(d?'Delivery confirmed and saved.':'Payment saved.');
+}
+
+/* ============ MAP ============ */
+function drawMap(){
+  if(!S.map){
+    S.map=L.map('map').setView([12.98,80.2],11);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(S.map);
+    S.layer=L.layerGroup().addTo(S.map);
+  }
+  setTimeout(()=>S.map.invalidateSize(),50);
+  S.layer.clearLayers();const pts=[];
+  const pin=c=>L.divIcon({className:'',html:`<div style="width:18px;height:18px;border-radius:50%;background:${c};border:3px solid #fff;box-shadow:0 0 0 1px #0006"></div>`,iconSize:[18,18]});
+  const col={Pending:'#e08a1e',Out:'#2a6fdb',Delivered:'#1f9d55',Cancelled:'#d13b3b'};
+  mine().filter(o=>o.lat&&o.lng).forEach(o=>{
+    L.marker([o.lat,o.lng],{icon:pin(col[o.status]),title:o.no}).addTo(S.layer).bindPopup(
+     `<b>${esc(o.no)} - ${esc(o.name)}</b><br>📱 ${esc(o.mobile)}<br>${esc(o.address)}<br>${inr(o.amount)} · ${LBL[o.status]}<br><a href="${navUrl(o)}" target="_blank" rel="noopener"><b>NAVIGATE</b></a>`);
+    pts.push([o.lat,o.lng]);
+  });
+  if(S.loc){
+    L.marker([S.loc.lat,S.loc.lng],{icon:L.divIcon({className:'',html:'<div style="font-size:28px;line-height:28px">🛵</div>',iconSize:[28,28]})}).addTo(S.layer)
+     .bindPopup(`<b>${esc(S.loc.name)}</b><br>📍 Current location<br>Updated ${new Date(S.loc.ts).toLocaleTimeString()}`);
+    pts.push([S.loc.lat,S.loc.lng]);
+  }
+  if(pts.length&&!S.fit){S.map.fitBounds(pts,{padding:[40,40],maxZoom:15});S.fit=true}
+}
+
+/* ============ INIT ============ */
+const saved=sessionStorage.getItem('ts_user');
+if(saved&&CFG.USERS[saved]){S.user=CFG.USERS[saved];S.tab=S.user.role==='admin'?'dash':'route';start()}
+</script>
+
+<!--
+GOOGLE SHEET SETUP (one time)
+1. Sheet 1 header row (exact): Order Number | Customer Name | Mobile Number | Address | Latitude | Longitude | Order Amount | Delivery Status | Amount Collected | Payment Method | Delivery Date | Delivery Time | Delivery Boy | Remarks
+2. Add a second tab named "Location" with header: Name | Lat | Lng | Timestamp
+3. Extensions > Apps Script. Paste the code below, then Deploy > New deployment > Web app (Execute as: Me, Access: Anyone). Copy the URL into CFG.API above.
+
+const key=h=>String(h).toLowerCase().replace(/[^a-z0-9]/g,'');
+function sh(){return SpreadsheetApp.getActive().getSheets()[0]}
+function doGet(){
+  const v=sh().getDataRange().getValues(),h=v.shift().map(key);
+  const orders=v.filter(r=>r[0]).map(r=>{const o={};h.forEach((k,i)=>o[k]=r[i] instanceof Date?Utilities.formatDate(r[i],'Asia/Kolkata','yyyy-MM-dd'):r[i]);return o});
+  const l=SpreadsheetApp.getActive().getSheetByName('Location').getRange(2,1,1,4).getValues()[0];
+  const location=l[0]?{name:l[0],lat:l[1],lng:l[2],ts:l[3]}:null;
+  return ContentService.createTextOutput(JSON.stringify({orders,location})).setMimeType(ContentService.MimeType.JSON);
+}
+function doPost(e){
+  const d=JSON.parse(e.postData.contents);
+  if(d.action==='loc'){SpreadsheetApp.getActive().getSheetByName('Location').getRange(2,1,1,4).setValues([[d.loc.name,d.loc.lat,d.loc.lng,d.loc.ts]])}
+  if(d.action==='update'){
+    const s=sh(),v=s.getDataRange().getValues(),h=v[0].map(key);
+    const map={status:'deliverystatus',collected:'amountcollected',method:'paymentmethod',date:'deliverydate',time:'deliverytime',remarks:'remarks'};
+    const label={Out:'Out for Delivery'};
+    for(let r=1;r<v.length;r++) if(String(v[r][0]).toUpperCase()===d.no){
+      for(const k in d.patch){ if(!map[k])continue;
+        s.getRange(r+1,h.indexOf(map[k])+1).setValue(k==='status'?(label[d.patch[k]]||d.patch[k]):d.patch[k]); }
+      break;
+    }
+  }
+  return ContentService.createTextOutput('ok');
+}
+-->
+</body>
+</html>
